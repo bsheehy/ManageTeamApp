@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TeamManage.App.ViewModels"
+             x:Class="TeamManage.App.Views.MatchDetailPage"
+             x:DataType="vm:MatchDetailViewModel"
+             Title="{Binding Title}">
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="14">
+
+            <Label Text="{Binding ErrorMessage}" TextColor="Red"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+
+            <Frame Padding="14" CornerRadius="8">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="{Binding Match.Location}" FontSize="14" TextColor="Gray" />
+                    <Label Text="{Binding Match.KickOff, StringFormat='{0:dddd d MMMM yyyy, h:mm tt}'}" FontSize="14" TextColor="Gray" />
+                    <Label Text="{Binding Match.Notes}" FontSize="13" FontAttributes="Italic"
+                           IsVisible="{Binding Match.Notes, Converter={StaticResource StringNotEmptyConverter}}" />
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Player attendance response -->
+            <VerticalStackLayout Spacing="10" IsVisible="{Binding IsPlayer}">
+                <Label Text="{Binding MyAttendanceStatus, StringFormat='Your response: {0}'}" FontAttributes="Bold" />
+                <HorizontalStackLayout Spacing="10">
+                    <Button Text="Confirm Attendance" Command="{Binding ConfirmCommand}" />
+                    <Button Text="Decline" Command="{Binding DeclineCommand}" BackgroundColor="Gray" />
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+
+            <Label Text="Squad" FontSize="18" FontAttributes="Bold" />
+
+            <CollectionView ItemsSource="{Binding Rows}" SelectionMode="None">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:MatchPlayerRowViewModel">
+                        <Frame Margin="0,4" Padding="10" CornerRadius="6">
+                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="4">
+                                <Label Grid.Row="0" Grid.Column="0" Text="{Binding PlayerName}" FontAttributes="Bold" />
+                                <Label Grid.Row="0" Grid.Column="1" Text="{Binding AttendanceLabel}" FontSize="12" TextColor="Gray" />
+
+                                <!-- Manager editing controls -->
+                                <HorizontalStackLayout Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Spacing="12"
+                                    IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:MatchDetailViewModel}}, Path=IsManager}">
+                                    <Picker Title="Position"
+                                            ItemsSource="{Binding Source={RelativeSource AncestorType={x:Type vm:MatchDetailViewModel}}, Path=AvailablePositions}"
+                                            ItemDisplayBinding="{Binding Name}"
+                                            SelectedItem="{Binding Position}"
+                                            WidthRequest="140" />
+                                    <HorizontalStackLayout Spacing="4">
+                                        <CheckBox IsChecked="{Binding IsSelected}" />
+                                        <Label Text="Squad" VerticalOptions="Center" />
+                                    </HorizontalStackLayout>
+                                    <HorizontalStackLayout Spacing="4">
+                                        <CheckBox IsChecked="{Binding IsStarter}" />
+                                        <Label Text="Starter" VerticalOptions="Center" />
+                                    </HorizontalStackLayout>
+                                </HorizontalStackLayout>
+
+                                <!-- Player read-only view -->
+                                <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                       IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:MatchDetailViewModel}}, Path=IsPlayer}"
+                                       FontSize="13" TextColor="Gray">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="{Binding Position.Name}" />
+                                            <Span Text=" " />
+                                            <Span Text="{Binding IsStarter}" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                </Label>
+                            </Grid>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <Button Text="Save Squad" Command="{Binding SaveSelectionsCommand}"
+                    IsVisible="{Binding IsManager}" IsEnabled="{Binding IsNotBusy}" />
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

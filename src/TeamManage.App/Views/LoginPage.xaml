@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TeamManage.App.ViewModels"
+             x:Class="TeamManage.App.Views.LoginPage"
+             x:DataType="vm:LoginViewModel"
+             Title="{Binding Title}">
+    <ScrollView>
+        <VerticalStackLayout Padding="30" Spacing="16" VerticalOptions="Center">
+            <Label Text="TeamManage" FontSize="32" FontAttributes="Bold" HorizontalOptions="Center" />
+            <Label Text="Sign in to manage your teams and matches" HorizontalOptions="Center" />
+
+            <Entry Placeholder="Email" Keyboard="Email" Text="{Binding Email}" />
+            <Entry Placeholder="Password" IsPassword="True" Text="{Binding Password}" />
+
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="Red"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+
+            <Button Text="Sign In" Command="{Binding LoginCommand}" IsEnabled="{Binding IsNotBusy}" />
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+
+            <Button Text="Create an account" Command="{Binding GoToRegisterCommand}" BackgroundColor="Transparent" TextColor="{AppThemeBinding Light=#512BD4, Dark=#AC99EA}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

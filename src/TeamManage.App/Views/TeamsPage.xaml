@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TeamManage.App.ViewModels"
+             xmlns:dto="clr-namespace:TeamManage.Application.DTOs.Teams;assembly=TeamManage.Application"
+             x:Class="TeamManage.App.Views.TeamsPage"
+             x:DataType="vm:TeamsViewModel"
+             Title="{Binding Title}">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Logout" Command="{Binding LogoutCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <Grid Padding="16" RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="12">
+        <Label Grid.Row="0" Text="{Binding WelcomeMessage}" FontSize="18" FontAttributes="Bold" />
+
+        <Label Grid.Row="1" Text="Offline - showing cached teams" TextColor="DarkOrange" FontAttributes="Bold"
+               IsVisible="{Binding IsOffline}" />
+
+        <Label Grid.Row="2" Text="{Binding ErrorMessage}" TextColor="Red"
+               IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+
+        <RefreshView Grid.Row="3" IsRefreshing="{Binding IsBusy}" Command="{Binding LoadCommand}">
+            <CollectionView ItemsSource="{Binding Teams}" SelectionMode="None">
+                <CollectionView.EmptyView>
+                    <Label Text="No teams yet. Create one to get started." HorizontalOptions="Center" Margin="0,40,0,0" />
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="dto:TeamSummaryDto">
+                        <Frame Margin="0,4" Padding="14" CornerRadius="8">
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:TeamsViewModel}}, Path=OpenTeamCommand}" CommandParameter="{Binding .}" />
+                            </Frame.GestureRecognizers>
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" />
+                                <Label Text="{Binding Sport}" FontSize="13" TextColor="Gray" />
+                                <Label FontSize="13" TextColor="Gray">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="{Binding PlayerCount}" />
+                                            <Span Text=" players on panel  •  squad size " />
+                                            <Span Text="{Binding SquadSize}" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                </Label>
+                            </VerticalStackLayout>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+
+        <Button Grid.Row="4" Text="+ New Team" Command="{Binding CreateTeamCommand}"
+                IsVisible="{Binding IsManager}" />
+    </Grid>
+</ContentPage>

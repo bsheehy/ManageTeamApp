@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TeamManage.App.ViewModels"
+             xmlns:dto="clr-namespace:TeamManage.Application.DTOs.Matches;assembly=TeamManage.Application"
+             x:Class="TeamManage.App.Views.MatchesPage"
+             x:DataType="vm:MatchesViewModel"
+             Title="{Binding Title}">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Logout" Command="{Binding LogoutCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <Grid Padding="16" RowDefinitions="Auto,Auto,Auto,*" RowSpacing="12">
+        <Label Grid.Row="0" Text="{Binding WelcomeMessage}" FontSize="18" FontAttributes="Bold" />
+
+        <Label Grid.Row="1" Text="Offline - showing cached matches" TextColor="DarkOrange" FontAttributes="Bold"
+               IsVisible="{Binding IsOffline}" />
+
+        <Label Grid.Row="2" Text="{Binding ErrorMessage}" TextColor="Red"
+               IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+
+        <RefreshView Grid.Row="3" IsRefreshing="{Binding IsBusy}" Command="{Binding LoadCommand}">
+            <CollectionView ItemsSource="{Binding Matches}" SelectionMode="None">
+                <CollectionView.EmptyView>
+                    <Label Text="No upcoming matches." HorizontalOptions="Center" Margin="0,40,0,0" />
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="dto:MatchSummaryDto">
+                        <Frame Margin="0,4" Padding="14" CornerRadius="8">
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MatchesViewModel}}, Path=OpenMatchCommand}" CommandParameter="{Binding .}" />
+                            </Frame.GestureRecognizers>
+                            <VerticalStackLayout Spacing="4">
+                                <Label FontSize="18" FontAttributes="Bold">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="{Binding TeamName}" />
+                                            <Span Text=" vs " />
+                                            <Span Text="{Binding Opponent}" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                </Label>
+                                <Label Text="{Binding Location}" FontSize="13" TextColor="Gray" />
+                                <Label Text="{Binding KickOff, StringFormat='{0:ddd d MMM yyyy, h:mm tt}'}" FontSize="13" TextColor="Gray" />
+                                <Label Text="{Binding MyAttendanceStatus}" FontSize="13" FontAttributes="Bold" />
+                            </VerticalStackLayout>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+    </Grid>
+</ContentPage>

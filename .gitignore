@@ -1,0 +1,19 @@
+## .NET
+bin/
+obj/
+*.user
+
+## Rider / VS
+.vs/
+.idea/
+*.suo
+
+## MAUI
+*.ap_
+*.aab
+*.apk
+*.ipa
+
+## OS
+.DS_Store
+Thumbs.db

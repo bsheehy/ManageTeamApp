@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TeamManage.Api/TeamManage.Api.csproj" />
+    <Project Path="src/TeamManage.App/TeamManage.App.csproj" />
+    <Project Path="src/TeamManage.Application/TeamManage.Application.csproj" />
+    <Project Path="src/TeamManage.Domain/TeamManage.Domain.csproj" />
+    <Project Path="src/TeamManage.Infrastructure/TeamManage.Infrastructure.csproj" />
+  </Folder>
+</Solution>

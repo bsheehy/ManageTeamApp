@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TeamManage.App.ViewModels"
+             x:Class="TeamManage.App.Views.CreateTeamPage"
+             x:DataType="vm:CreateTeamViewModel"
+             Title="{Binding Title}">
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="14">
+            <Label Text="Team name" FontAttributes="Bold" />
+            <Entry Placeholder="e.g. Senior Footballers" Text="{Binding Name}" />
+
+            <Label Text="Sport" FontAttributes="Bold" />
+            <Picker ItemsSource="{Binding SportOptions}" SelectedItem="{Binding Sport}" />
+
+            <Label Text="Squad size (starting lineup)" FontAttributes="Bold" />
+            <Entry Keyboard="Numeric" Text="{Binding SquadSize}" />
+
+            <Label Text="{Binding ErrorMessage}" TextColor="Red"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+
+            <Button Text="Create Team" Command="{Binding SaveCommand}" IsEnabled="{Binding IsNotBusy}" />
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
