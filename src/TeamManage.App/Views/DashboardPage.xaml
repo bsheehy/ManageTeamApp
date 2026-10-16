@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TeamManage.App.ViewModels"
+             x:Class="TeamManage.App.Views.DashboardPage"
+             x:DataType="vm:DashboardViewModel"
+             Title="{Binding Title}">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Logout" Command="{Binding LogoutCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <Grid Padding="16" RowDefinitions="Auto,*" RowSpacing="12">
+        <Label Grid.Row="0" Text="{Binding WelcomeMessage}" FontSize="18" FontAttributes="Bold" />
+
+        <VerticalStackLayout Grid.Row="1" Spacing="12" VerticalOptions="Start">
+            <Button Text="Manage Teams" Command="{Binding GoToTeamsCommand}" />
+            <Button Text="My Clubs" Command="{Binding GoToClubsCommand}"
+                    IsVisible="{Binding IsManager}" />
+            <Button Text="Manage Team Managers" Command="{Binding GoToManagersCommand}"
+                    IsVisible="{Binding IsManager}" />
+            <Button Text="Create New Club"
+                    IsVisible="{Binding IsManager}" />
+            <Button Text="Create New Team"
+                    IsVisible="{Binding IsManager}" />
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>

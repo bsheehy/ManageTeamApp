@@ -42,6 +42,19 @@ public class AuthResponse
     public string RefreshToken { get; set; } = string.Empty;
 
     public DateTime RefreshTokenExpiresAtUtc { get; set; }
+
+    /// <summary>True when the user signed in via an invite link and must set a new password.</summary>
+    public bool MustChangePassword { get; set; }
+}
+
+public class RedeemInviteRequest
+{
+    public string Token { get; set; } = string.Empty;
+}
+
+public class ChangePasswordRequest
+{
+    public string NewPassword { get; set; } = string.Empty;
 }
 
 public class RefreshTokenRequest

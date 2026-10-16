@@ -16,21 +16,28 @@ public class TeamRepository : ITeamRepository
 
     public Task<Team?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
         _context.Teams
+            .Include(t => t.Club)
             .Include(t => t.Manager)
             .Include(t => t.Players).ThenInclude(p => p.Player)
             .Include(t => t.Positions)
             .FirstOrDefaultAsync(t => t.Id == id, ct);
 
-    public Task<List<Team>> GetByManagerIdAsync(Guid managerId, CancellationToken ct = default) =>
+    public Task<List<Team>> GetForUserAsync(Guid userId, CancellationToken ct = default) =>
         _context.Teams
+            .Include(t => t.Club)
             .Include(t => t.Players)
-            .Where(t => t.ManagerId == managerId)
+            .Where(t => t.ManagerId == userId
+                || t.Club!.ClubManagerId == userId
+                || t.Players.Any(p => p.PlayerId == userId))
+            .OrderBy(t => t.Name)
             .ToListAsync(ct);
 
-    public Task<List<Team>> GetByPlayerIdAsync(Guid playerId, CancellationToken ct = default) =>
+    public Task<List<Team>> GetByClubIdAsync(Guid clubId, CancellationToken ct = default) =>
         _context.Teams
+            .Include(t => t.Club)
             .Include(t => t.Players)
-            .Where(t => t.Players.Any(p => p.PlayerId == playerId))
+            .Where(t => t.ClubId == clubId)
+            .OrderBy(t => t.Name)
             .ToListAsync(ct);
 
     public async Task AddAsync(Team team, CancellationToken ct = default) =>

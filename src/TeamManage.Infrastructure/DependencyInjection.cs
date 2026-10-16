@@ -22,9 +22,11 @@ public static class DependencyInjection
 
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ITeamRepository, TeamRepository>();
+        services.AddScoped<IClubRepository, ClubRepository>();
         services.AddScoped<IMatchRepository, MatchRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddSingleton<TeamManage.Application.Interfaces.Services.IEmailSender, TeamManage.Infrastructure.Email.ConsoleEmailSender>();
 
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();

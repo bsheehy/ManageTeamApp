@@ -34,7 +34,7 @@ public class MatchService : IMatchService
             return Result<MatchDto>.Failure("Team not found.");
         }
 
-        if (team.ManagerId != managerId)
+        if (!team.IsManagedBy(managerId))
         {
             return Result<MatchDto>.Failure("Only the team's manager can schedule matches.");
         }
@@ -66,10 +66,23 @@ public class MatchService : IMatchService
         return Result<MatchDto>.Success(MapToDto(match, team.Name));
     }
 
-    public async Task<Result<List<MatchSummaryDto>>> GetMatchesForTeamAsync(Guid teamId, CancellationToken ct = default)
+    public async Task<Result<List<MatchSummaryDto>>> GetMatchesForTeamAsync(Guid teamId, Guid userId, CancellationToken ct = default)
     {
-        var matches = await _matches.GetByTeamIdAsync(teamId, ct);
-        return Result<List<MatchSummaryDto>>.Success(matches.Select(m => MapToSummaryDto(m, playerId: null)).ToList());
+        var team = await _teams.GetByIdAsync(teamId, ct);
+        if (team is null)
+        {
+            return Result<List<MatchSummaryDto>>.Failure("Team not found.");
+        }
+
+        if (team.IsManagedBy(userId))
+        {
+            var matches = await _matches.GetByTeamIdAsync(teamId, ct);
+            return Result<List<MatchSummaryDto>>.Success(matches.Select(m => MapToSummaryDto(m, playerId: userId)).ToList());
+        }
+
+        var playerMatches = await _matches.GetByPlayerIdAsync(userId, ct);
+        return Result<List<MatchSummaryDto>>.Success(
+            playerMatches.Where(m => m.TeamId == teamId).Select(m => MapToSummaryDto(m, userId)).ToList());
     }
 
     public async Task<Result<List<MatchSummaryDto>>> GetMatchesForPlayerAsync(Guid playerId, CancellationToken ct = default)
@@ -112,7 +125,7 @@ public class MatchService : IMatchService
             return Result<MatchDto>.Failure("Match not found.");
         }
 
-        if (match.Team is null || match.Team.ManagerId != managerId)
+        if (match.Team is null || !match.Team.IsManagedBy(managerId))
         {
             return Result<MatchDto>.Failure("Only the team's manager can set the match-day squad.");
         }

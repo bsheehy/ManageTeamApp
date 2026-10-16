@@ -10,5 +10,13 @@ public interface IUserRepository
 
     Task<bool> ExistsByEmailAsync(string email, CancellationToken ct = default);
 
+    Task<User?> GetByInviteTokenHashAsync(string tokenHash, CancellationToken ct = default);
+
     Task AddAsync(User user, CancellationToken ct = default);
+
+    Task<List<User>> GetTeamManagersCreatedByAsync(Guid creatorId, CancellationToken ct = default);
+
+    Task<User?> GetTeamManagerCreatedByAsync(Guid id, Guid creatorId, CancellationToken ct = default);
+
+    void Remove(User user);
 }

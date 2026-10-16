@@ -13,6 +13,8 @@ public class TeamManageDbContext : DbContext
 
     public DbSet<Team> Teams => Set<Team>();
 
+    public DbSet<Club> Clubs => Set<Club>();
+
     public DbSet<TeamPlayer> TeamPlayers => Set<TeamPlayer>();
 
     public DbSet<Position> Positions => Set<Position>();

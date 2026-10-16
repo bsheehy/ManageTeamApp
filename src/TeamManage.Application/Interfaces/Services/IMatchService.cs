@@ -8,7 +8,7 @@ public interface IMatchService
 {
     Task<Result<MatchDto>> CreateMatchAsync(Guid managerId, CreateMatchRequest request, CancellationToken ct = default);
 
-    Task<Result<List<MatchSummaryDto>>> GetMatchesForTeamAsync(Guid teamId, CancellationToken ct = default);
+    Task<Result<List<MatchSummaryDto>>> GetMatchesForTeamAsync(Guid teamId, Guid userId, CancellationToken ct = default);
 
     Task<Result<List<MatchSummaryDto>>> GetMatchesForPlayerAsync(Guid playerId, CancellationToken ct = default);
 

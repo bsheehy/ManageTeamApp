@@ -4,7 +4,7 @@ using TeamManage.App.Services;
 
 namespace TeamManage.App.ViewModels;
 
-[QueryProperty(nameof(TeamId), "teamId")]
+[QueryProperty(nameof(TeamIdText), "teamId")]
 public partial class CreateMatchViewModel : BaseViewModel
 {
     private readonly IMatchApiService _matchApi;
@@ -26,6 +26,11 @@ public partial class CreateMatchViewModel : BaseViewModel
 
     [ObservableProperty]
     private string? notes;
+
+    public string TeamIdText
+    {
+        set => TeamId = Guid.TryParse(value, out var id) ? id : Guid.Empty;
+    }
 
     public CreateMatchViewModel(IMatchApiService matchApi)
     {

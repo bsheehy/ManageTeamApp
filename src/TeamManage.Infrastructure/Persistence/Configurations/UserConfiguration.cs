@@ -18,11 +18,16 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.Property(u => u.PasswordHash).IsRequired();
 
-        builder.Property(u => u.Role).HasConversion<string>().HasMaxLength(20);
+        builder.Property(u => u.Role);
 
         builder.HasMany(u => u.ManagedTeams)
             .WithOne(t => t.Manager)
             .HasForeignKey(t => t.ManagerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasMany(u => u.ManagedClubs)
+            .WithOne(c => c.ClubManager)
+            .HasForeignKey(c => c.ClubManagerId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

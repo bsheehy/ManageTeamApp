@@ -20,10 +20,39 @@ public partial class CreateTeamViewModel : BaseViewModel
 
     public List<SportType> SportOptions { get; } = Enum.GetValues<SportType>().ToList();
 
-    public CreateTeamViewModel(ITeamApiService teamApi)
+    private readonly IClubApiService _clubApi;
+
+    [ObservableProperty]
+    private TeamManage.Application.DTOs.Clubs.ClubDto? selectedClub;
+
+    public List<TeamManage.Application.DTOs.Clubs.ClubDto> Clubs { get; private set; } = [];
+
+    private readonly IManagerApiService _managerApi;
+
+    [ObservableProperty]
+    private TeamManage.Application.DTOs.Managers.TeamManagerSummaryDto? selectedManager;
+
+    public List<TeamManage.Application.DTOs.Managers.TeamManagerSummaryDto> Managers { get; private set; } = [];
+
+    public CreateTeamViewModel(ITeamApiService teamApi, IClubApiService clubApi, IManagerApiService managerApi)
     {
         _teamApi = teamApi;
+        _clubApi = clubApi;
+        _managerApi = managerApi;
         Title = "New Team";
+        _ = LoadClubsAsync();
+    }
+
+    private async Task LoadClubsAsync()
+    {
+        await RunBusyAsync(async () =>
+        {
+            Clubs = await _clubApi.GetMyClubsAsync();
+            OnPropertyChanged(nameof(Clubs));
+            SelectedClub = Clubs.FirstOrDefault();
+            Managers = await _managerApi.GetManagersAsync();
+            OnPropertyChanged(nameof(Managers));
+        });
     }
 
     partial void OnSportChanged(SportType value)
@@ -56,8 +85,16 @@ public partial class CreateTeamViewModel : BaseViewModel
                 return;
             }
 
+            if (SelectedClub is null)
+            {
+                ErrorMessage = "Please create a club first, then select it.";
+                return;
+            }
+
             await _teamApi.CreateTeamAsync(new()
             {
+                ClubId = SelectedClub.Id,
+                ManagerId = SelectedManager?.Id,
                 Name = Name.Trim(),
                 Sport = Sport,
                 SquadSize = SquadSize

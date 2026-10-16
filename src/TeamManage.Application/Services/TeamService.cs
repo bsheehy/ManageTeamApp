@@ -12,23 +12,32 @@ namespace TeamManage.Application.Services;
 public class TeamService : ITeamService
 {
     private readonly ITeamRepository _teams;
+    private readonly IClubRepository _clubs;
     private readonly IUserRepository _users;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly IJwtTokenGenerator _tokenGenerator;
+    private readonly IEmailSender _email;
 
     public TeamService(
         ITeamRepository teams,
+        IClubRepository clubs,
         IUserRepository users,
         IUnitOfWork unitOfWork,
-        IPasswordHasher passwordHasher)
+        IPasswordHasher passwordHasher,
+        IJwtTokenGenerator tokenGenerator,
+        IEmailSender email)
     {
+        _tokenGenerator = tokenGenerator;
+        _email = email;
         _teams = teams;
+        _clubs = clubs;
         _users = users;
         _unitOfWork = unitOfWork;
         _passwordHasher = passwordHasher;
     }
 
-    public async Task<Result<TeamDto>> CreateTeamAsync(Guid managerId, CreateTeamRequest request, CancellationToken ct = default)
+    public async Task<Result<TeamDto>> CreateTeamAsync(Guid userId, CreateTeamRequest request, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(request.Name))
         {
@@ -40,10 +49,27 @@ public class TeamService : ITeamService
             return Result<TeamDto>.Failure("Squad size must be greater than zero.");
         }
 
-        var manager = await _users.GetByIdAsync(managerId, ct);
-        if (manager is null || manager.Role != UserRole.Manager)
+        var club = await _clubs.GetByIdAsync(request.ClubId, ct);
+        if (club is null)
         {
-            return Result<TeamDto>.Failure("Only managers can create teams.");
+            return Result<TeamDto>.Failure("Club not found.");
+        }
+
+        if (club.ClubManagerId != userId)
+        {
+            return Result<TeamDto>.Failure("Only the club manager can create teams in this club.");
+        }
+
+        Guid? assignedManagerId = null;
+        if (request.ManagerId.HasValue)
+        {
+            var teamManager = await _users.GetTeamManagerCreatedByAsync(request.ManagerId.Value, userId, ct);
+            if (teamManager is null)
+            {
+                return Result<TeamDto>.Failure("Selected team manager was not found.");
+            }
+
+            assignedManagerId = teamManager.Id;
         }
 
         var team = new Team
@@ -51,7 +77,9 @@ public class TeamService : ITeamService
             Name = request.Name.Trim(),
             Sport = request.Sport,
             SquadSize = request.SquadSize,
-            ManagerId = managerId
+            ClubId = club.Id,
+            Club = club,
+            ManagerId = assignedManagerId
         };
 
         var positionNames = request.PositionNames is { Count: > 0 }
@@ -66,22 +94,16 @@ public class TeamService : ITeamService
         await _teams.AddAsync(team, ct);
         await _unitOfWork.SaveChangesAsync(ct);
 
-        return Result<TeamDto>.Success(MapToDto(team, manager.FullName));
+        return Result<TeamDto>.Success(MapToDto(team, string.Empty, userId));
     }
 
-    public async Task<Result<List<TeamSummaryDto>>> GetTeamsForManagerAsync(Guid managerId, CancellationToken ct = default)
+    public async Task<Result<List<TeamSummaryDto>>> GetTeamsForUserAsync(Guid userId, CancellationToken ct = default)
     {
-        var teams = await _teams.GetByManagerIdAsync(managerId, ct);
-        return Result<List<TeamSummaryDto>>.Success(teams.Select(MapToSummaryDto).ToList());
+        var teams = await _teams.GetForUserAsync(userId, ct);
+        return Result<List<TeamSummaryDto>>.Success(teams.Select(t => MapToSummaryDto(t, userId)).ToList());
     }
 
-    public async Task<Result<List<TeamSummaryDto>>> GetTeamsForPlayerAsync(Guid playerId, CancellationToken ct = default)
-    {
-        var teams = await _teams.GetByPlayerIdAsync(playerId, ct);
-        return Result<List<TeamSummaryDto>>.Success(teams.Select(MapToSummaryDto).ToList());
-    }
-
-    public async Task<Result<TeamDto>> GetTeamDetailAsync(Guid teamId, CancellationToken ct = default)
+    public async Task<Result<TeamDto>> GetTeamDetailAsync(Guid teamId, Guid userId, CancellationToken ct = default)
     {
         var team = await _teams.GetByIdAsync(teamId, ct);
         if (team is null)
@@ -89,7 +111,81 @@ public class TeamService : ITeamService
             return Result<TeamDto>.Failure("Team not found.");
         }
 
-        return Result<TeamDto>.Success(MapToDto(team, team.Manager?.FullName ?? string.Empty));
+        return Result<TeamDto>.Success(MapToDto(team, team.Manager?.FullName ?? string.Empty, userId));
+    }
+
+    public async Task<Result<TeamManagerDto>> AssignTeamManagerAsync(Guid teamId, Guid clubManagerId, AssignManagerRequest request, CancellationToken ct = default)
+    {
+        var team = await _teams.GetByIdAsync(teamId, ct);
+        if (team is null)
+        {
+            return Result<TeamManagerDto>.Failure("Team not found.");
+        }
+
+        if (team.Club?.ClubManagerId != clubManagerId)
+        {
+            return Result<TeamManagerDto>.Failure("Only the club manager can assign a team manager.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Email))
+        {
+            return Result<TeamManagerDto>.Failure("Manager email is required.");
+        }
+
+        var email = request.Email.Trim().ToLowerInvariant();
+        var manager = await _users.GetByEmailAsync(email, ct);
+        string? inviteToken = null;
+
+        if (manager is null)
+        {
+            if (string.IsNullOrWhiteSpace(request.FullName))
+            {
+                return Result<TeamManagerDto>.Failure("Manager name is required for a new account.");
+            }
+
+            var (token, _) = _tokenGenerator.GenerateRefreshToken();
+            inviteToken = token;
+            manager = new User
+            {
+                FullName = request.FullName.Trim(),
+                Email = email,
+                PasswordHash = _passwordHasher.Hash(GenerateTemporaryPassword()),
+                Role = UserRole.TeamManager,
+                InviteTokenHash = _tokenGenerator.HashRefreshToken(token),
+                InviteTokenExpiresAtUtc = DateTime.UtcNow.AddDays(7),
+                MustChangePassword = true,
+                CreatedByUserId = clubManagerId
+            };
+            await _users.AddAsync(manager, ct);
+        }
+        else if (manager.Role == UserRole.Player)
+        {
+            manager.Role = UserRole.TeamManager;
+        }
+
+        team.ManagerId = manager.Id;
+        team.Manager = manager;
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        if (inviteToken is not null)
+        {
+            var link = $"{InviteLink.Scheme}://login?token={Uri.EscapeDataString(inviteToken)}";
+            await _email.SendAsync(
+                manager.Email,
+                $"You've been assigned to manage {team.Name}",
+                $"Hi {manager.FullName},\n\nYou've been assigned as team manager of {team.Name} ({team.Club?.Name}).\n\n" +
+                $"Your login email: {manager.Email}\n\n" +
+                $"Open this link on your phone to sign in and set your password (expires in 7 days):\n{link}\n",
+                ct);
+        }
+
+        return Result<TeamManagerDto>.Success(new TeamManagerDto
+        {
+            ManagerId = manager.Id,
+            FullName = manager.FullName,
+            Email = manager.Email,
+            InviteSent = inviteToken is not null
+        });
     }
 
     public async Task<Result<TeamPlayerDto>> AddPlayerToTeamAsync(Guid teamId, Guid managerId, AddPlayerRequest request, CancellationToken ct = default)
@@ -100,7 +196,7 @@ public class TeamService : ITeamService
             return Result<TeamPlayerDto>.Failure("Team not found.");
         }
 
-        if (team.ManagerId != managerId)
+        if (!team.IsManagedBy(managerId))
         {
             return Result<TeamPlayerDto>.Failure("Only the team's manager can add players.");
         }
@@ -162,7 +258,7 @@ public class TeamService : ITeamService
             return Result.Failure("Team not found.");
         }
 
-        if (team.ManagerId != managerId)
+        if (!team.IsManagedBy(managerId))
         {
             return Result.Failure("Only the team's manager can remove players.");
         }
@@ -186,16 +282,19 @@ public class TeamService : ITeamService
         return Convert.ToBase64String(bytes).Replace("+", "P").Replace("/", "s").Replace("=", string.Empty);
     }
 
-    private static TeamSummaryDto MapToSummaryDto(Team team) => new()
+    private static TeamSummaryDto MapToSummaryDto(Team team, Guid userId) => new()
     {
         Id = team.Id,
         Name = team.Name,
         Sport = team.Sport,
         SquadSize = team.SquadSize,
-        PlayerCount = team.Players.Count
+        PlayerCount = team.Players.Count,
+        ClubId = team.ClubId,
+        ClubName = team.Club?.Name ?? string.Empty,
+        CanManage = team.IsManagedBy(userId)
     };
 
-    private static TeamDto MapToDto(Team team, string managerName) => new()
+    private static TeamDto MapToDto(Team team, string managerName, Guid userId) => new()
     {
         Id = team.Id,
         Name = team.Name,
@@ -203,6 +302,10 @@ public class TeamService : ITeamService
         SquadSize = team.SquadSize,
         ManagerId = team.ManagerId,
         ManagerName = managerName,
+        ClubId = team.ClubId,
+        ClubName = team.Club?.Name ?? string.Empty,
+        CanManage = team.IsManagedBy(userId),
+        CanAssignManager = team.Club?.ClubManagerId == userId,
         Players = team.Players
             .OrderBy(p => p.JerseyNumber ?? int.MaxValue)
             .Select(p => new TeamPlayerDto

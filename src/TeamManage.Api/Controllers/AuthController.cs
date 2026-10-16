@@ -49,7 +49,22 @@ public class AuthController : ApiControllerBase
     }
 
     /// <summary>
-    /// Exchanges a valid refresh token for a new access token, so a mobile client
+    /// Exchanges a one-time emailed invite token for a signed-in session.
+    /// </summary>
+    [HttpPost("redeem-invite")]
+    public async Task<ActionResult<AuthResponse>> RedeemInvite(RedeemInviteRequest request, CancellationToken ct)
+    {
+        var result = await _authService.RedeemInviteAsync(request.Token, ct);
+        if (!result.Succeeded)
+        {
+            return Unauthorized(new { error = result.Error });
+        }
+
+        return Ok(result.Data);
+    }
+
+    /// <summary>
+    /// Exchanges a valid refresh token
     /// can silently renew a session after its short-lived access token expires
     /// (e.g. after being offline) without the user re-entering their password.
     /// </summary>

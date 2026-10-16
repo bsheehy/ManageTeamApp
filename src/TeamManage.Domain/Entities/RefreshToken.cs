@@ -9,7 +9,7 @@ namespace TeamManage.Domain.Entities;
 /// </summary>
 public class RefreshToken
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; set; } = Guid.CreateVersion7();
 
     public Guid UserId { get; set; }
 

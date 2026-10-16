@@ -22,6 +22,30 @@ namespace TeamManage.Infrastructure.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("TeamManage.Domain.Entities.Club", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ClubManagerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClubManagerId");
+
+                    b.ToTable("Clubs");
+                });
+
             modelBuilder.Entity("TeamManage.Domain.Entities.Match", b =>
                 {
                     b.Property<Guid>("Id")
@@ -47,10 +71,8 @@ namespace TeamManage.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<Guid>("TeamId")
                         .HasColumnType("uniqueidentifier");
@@ -68,10 +90,8 @@ namespace TeamManage.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("AttendanceStatus")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                    b.Property<int>("AttendanceStatus")
+                        .HasColumnType("int");
 
                     b.Property<bool>("IsSelected")
                         .HasColumnType("bit");
@@ -166,10 +186,13 @@ namespace TeamManage.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("ClubId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid>("ManagerId")
+                    b.Property<Guid?>("ManagerId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Name")
@@ -177,15 +200,15 @@ namespace TeamManage.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<string>("Sport")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                    b.Property<int>("Sport")
+                        .HasColumnType("int");
 
                     b.Property<int>("SquadSize")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ClubId");
 
                     b.HasIndex("ManagerId");
 
@@ -229,6 +252,9 @@ namespace TeamManage.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(256)
@@ -239,14 +265,21 @@ namespace TeamManage.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<DateTime?>("InviteTokenExpiresAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("InviteTokenHash")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("MustChangePassword")
+                        .HasColumnType("bit");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -254,6 +287,17 @@ namespace TeamManage.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("TeamManage.Domain.Entities.Club", b =>
+                {
+                    b.HasOne("TeamManage.Domain.Entities.User", "ClubManager")
+                        .WithMany("ManagedClubs")
+                        .HasForeignKey("ClubManagerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ClubManager");
                 });
 
             modelBuilder.Entity("TeamManage.Domain.Entities.Match", b =>
@@ -283,8 +327,7 @@ namespace TeamManage.Infrastructure.Persistence.Migrations
 
                     b.HasOne("TeamManage.Domain.Entities.Position", "Position")
                         .WithMany("MatchPlayers")
-                        .HasForeignKey("PositionId")
-                        .OnDelete(DeleteBehavior.ClientSetNull);
+                        .HasForeignKey("PositionId");
 
                     b.Navigation("Match");
 
@@ -317,11 +360,18 @@ namespace TeamManage.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("TeamManage.Domain.Entities.Team", b =>
                 {
+                    b.HasOne("TeamManage.Domain.Entities.Club", "Club")
+                        .WithMany("Teams")
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("TeamManage.Domain.Entities.User", "Manager")
                         .WithMany("ManagedTeams")
                         .HasForeignKey("ManagerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Club");
 
                     b.Navigation("Manager");
                 });
@@ -345,6 +395,11 @@ namespace TeamManage.Infrastructure.Persistence.Migrations
                     b.Navigation("Team");
                 });
 
+            modelBuilder.Entity("TeamManage.Domain.Entities.Club", b =>
+                {
+                    b.Navigation("Teams");
+                });
+
             modelBuilder.Entity("TeamManage.Domain.Entities.Match", b =>
                 {
                     b.Navigation("Selections");
@@ -366,6 +421,8 @@ namespace TeamManage.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("TeamManage.Domain.Entities.User", b =>
                 {
+                    b.Navigation("ManagedClubs");
+
                     b.Navigation("ManagedTeams");
 
                     b.Navigation("MatchSelections");

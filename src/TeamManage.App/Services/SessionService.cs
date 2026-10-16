@@ -25,6 +25,10 @@ public interface ISessionService
 
     bool IsAuthenticated { get; }
 
+    bool IsClubManager { get; }
+
+    bool CanManageTeams { get; }
+
     Task SaveAsync(
         string token,
         Guid userId,
@@ -64,6 +68,10 @@ public class SessionService : ISessionService
     public UserRole Role { get; private set; }
 
     public bool IsAuthenticated => !string.IsNullOrEmpty(Token);
+
+    public bool IsClubManager => Role == UserRole.ClubManager;
+
+    public bool CanManageTeams => Role is UserRole.ClubManager or UserRole.TeamManager;
 
     public async Task SaveAsync(
         string token,

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TeamManage.App.ViewModels"
+             xmlns:dto="clr-namespace:TeamManage.Application.DTOs.Clubs;assembly=TeamManage.Application"
+             x:Class="TeamManage.App.Views.ClubsPage"
+             x:DataType="vm:ClubsViewModel"
+             Title="{Binding Title}">
+    <Grid Padding="16" RowDefinitions="Auto,*" RowSpacing="12">
+        <Label Grid.Row="0" Text="{Binding ErrorMessage}" TextColor="Red"
+               IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+        <RefreshView Grid.Row="1" IsRefreshing="{Binding IsBusy}" Command="{Binding LoadCommand}">
+            <CollectionView ItemsSource="{Binding Clubs}" SelectionMode="None">
+                <CollectionView.EmptyView>
+                    <Label Text="No clubs yet." HorizontalOptions="Center" Margin="0,40,0,0" />
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="dto:ClubDto">
+                        <Frame Margin="0,4" Padding="14" CornerRadius="8">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" />
+                                <Label FontSize="13" TextColor="Gray">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="{Binding TeamCount}" />
+                                            <Span Text=" teams" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                </Label>
+                            </VerticalStackLayout>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+    </Grid>
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="+ New Club" Command="{Binding NewClubCommand}" />
+    </ContentPage.ToolbarItems>
+</ContentPage>

@@ -14,7 +14,7 @@
             <Entry Placeholder="Password" IsPassword="True" Text="{Binding Password}" />
 
             <HorizontalStackLayout Spacing="10">
-                <Label Text="I am a Manager" VerticalOptions="Center" />
+                <Label Text="I am a Club Manager" VerticalOptions="Center" />
                 <Switch IsToggled="{Binding IsManager}" />
             </HorizontalStackLayout>
             <Label Text="Leave off if registering as a Player" FontSize="12" TextColor="Gray" />

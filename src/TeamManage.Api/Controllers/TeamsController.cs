@@ -24,10 +24,7 @@ public class TeamsController : ApiControllerBase
     [HttpGet]
     public async Task<ActionResult<List<TeamSummaryDto>>> GetMyTeams(CancellationToken ct)
     {
-        var isManager = User.IsInRole(nameof(UserRole.Manager));
-        var result = isManager
-            ? await _teamService.GetTeamsForManagerAsync(CurrentUserId, ct)
-            : await _teamService.GetTeamsForPlayerAsync(CurrentUserId, ct);
+        var result = await _teamService.GetTeamsForUserAsync(CurrentUserId, ct);
 
         return Ok(result.Data);
     }
@@ -38,7 +35,7 @@ public class TeamsController : ApiControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<TeamDto>> GetById(Guid id, CancellationToken ct)
     {
-        var result = await _teamService.GetTeamDetailAsync(id, ct);
+        var result = await _teamService.GetTeamDetailAsync(id, CurrentUserId, ct);
         if (!result.Succeeded)
         {
             return NotFound(new { error = result.Error });
@@ -51,7 +48,7 @@ public class TeamsController : ApiControllerBase
     /// Creates a new named panel/team. Manager role only.
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = nameof(UserRole.Manager))]
+    [Authorize(Roles = nameof(UserRole.ClubManager))]
     public async Task<ActionResult<TeamDto>> Create(CreateTeamRequest request, CancellationToken ct)
     {
         var result = await _teamService.CreateTeamAsync(CurrentUserId, request, ct);
@@ -64,10 +61,26 @@ public class TeamsController : ApiControllerBase
     }
 
     /// <summary>
-    /// Adds a player to the team's panel. Manager (and owner of the team) only.
+    /// Assigns the team's manager. Club manager of the team's club only.
+    /// </summary>
+    [HttpPut("{id:guid}/manager")]
+    [Authorize(Roles = nameof(UserRole.ClubManager))]
+    public async Task<ActionResult<TeamManagerDto>> AssignManager(Guid id, AssignManagerRequest request, CancellationToken ct)
+    {
+        var result = await _teamService.AssignTeamManagerAsync(id, CurrentUserId, request, ct);
+        if (!result.Succeeded)
+        {
+            return ProblemFrom(result.Error!);
+        }
+
+        return Ok(result.Data);
+    }
+
+    /// <summary>
+    /// Adds a player to the team's panel. Team manager or club manager only.
     /// </summary>
     [HttpPost("{id:guid}/players")]
-    [Authorize(Roles = nameof(UserRole.Manager))]
+    [Authorize(Roles = $"{nameof(UserRole.ClubManager)},{nameof(UserRole.TeamManager)}")]
     public async Task<ActionResult<TeamPlayerDto>> AddPlayer(Guid id, AddPlayerRequest request, CancellationToken ct)
     {
         var result = await _teamService.AddPlayerToTeamAsync(id, CurrentUserId, request, ct);
@@ -83,7 +96,7 @@ public class TeamsController : ApiControllerBase
     /// Removes a player from the team's panel. Manager (and owner of the team) only.
     /// </summary>
     [HttpDelete("{id:guid}/players/{teamPlayerId:guid}")]
-    [Authorize(Roles = nameof(UserRole.Manager))]
+    [Authorize(Roles = $"{nameof(UserRole.ClubManager)},{nameof(UserRole.TeamManager)}")]
     public async Task<IActionResult> RemovePlayer(Guid id, Guid teamPlayerId, CancellationToken ct)
     {
         var result = await _teamService.RemovePlayerFromTeamAsync(id, CurrentUserId, teamPlayerId, ct);

@@ -7,7 +7,7 @@ using TeamManage.Domain.Enums;
 
 namespace TeamManage.App.ViewModels;
 
-[QueryProperty(nameof(TeamId), "teamId")]
+[QueryProperty(nameof(TeamIdText), "teamId")]
 public partial class MatchesViewModel : BaseViewModel
 {
     private const string CacheKey = "matches";
@@ -24,9 +24,14 @@ public partial class MatchesViewModel : BaseViewModel
 
     public ObservableCollection<MatchSummaryDto> Matches { get; } = [];
 
-    public bool IsManager => _session.Role == UserRole.Manager;
+    public bool IsManager => _session.CanManageTeams;
 
     public string WelcomeMessage => $"Welcome, {_session.FullName}";
+
+    public string TeamIdText
+    {
+        set => TeamId = Guid.TryParse(value, out var id) ? id : null;
+    }
 
     partial void OnTeamIdChanged(Guid? value) => _ = LoadAsync();
 

@@ -17,6 +17,22 @@
                 <Button Text="+ New Match" Command="{Binding CreateMatchCommand}" IsVisible="{Binding IsManager}" />
             </HorizontalStackLayout>
 
+            <Label Text="{Binding CurrentManagerText}" TextColor="Gray" />
+
+            <VerticalStackLayout Spacing="10" IsVisible="{Binding CanAssignManager}">
+                <Label Text="Assign Team Manager" FontSize="16" FontAttributes="Bold" />
+                <Entry Placeholder="Full name (new accounts only)" Text="{Binding NewManagerFullName}" />
+                <Entry Placeholder="Email" Keyboard="Email" Text="{Binding NewManagerEmail}" />
+                <Button Text="Assign Manager" Command="{Binding AssignManagerCommand}" IsEnabled="{Binding IsNotBusy}" />
+                <Label IsVisible="{Binding LastManagerPassword, Converter={StaticResource StringNotEmptyConverter}}" TextColor="DarkGreen">
+                    <Label.FormattedText>
+                        <FormattedString>
+                            <Span Text="{Binding LastManagerPassword}" FontAttributes="Bold" />
+                        </FormattedString>
+                    </Label.FormattedText>
+                </Label>
+            </VerticalStackLayout>
+
             <Label Text="Panel" FontSize="18" FontAttributes="Bold" />
 
             <CollectionView ItemsSource="{Binding Players}" SelectionMode="None">

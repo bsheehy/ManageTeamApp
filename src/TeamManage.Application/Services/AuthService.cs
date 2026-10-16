@@ -101,6 +101,46 @@ public class AuthService : IAuthService
         return Result<AuthResponse>.Success(await IssueTokensAsync(existing.User, ct));
     }
 
+    public async Task<Result<AuthResponse>> RedeemInviteAsync(string token, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return Result<AuthResponse>.Failure("Invalid or expired invite link.");
+        }
+
+        var user = await _users.GetByInviteTokenHashAsync(_tokenGenerator.HashRefreshToken(token), ct);
+        if (user is null || user.InviteTokenExpiresAtUtc is null || user.InviteTokenExpiresAtUtc < DateTime.UtcNow)
+        {
+            return Result<AuthResponse>.Failure("Invalid or expired invite link.");
+        }
+
+        // One-time use.
+        user.InviteTokenHash = null;
+        user.InviteTokenExpiresAtUtc = null;
+
+        return Result<AuthResponse>.Success(await IssueTokensAsync(user, ct));
+    }
+
+    public async Task<Result> ChangePasswordAsync(Guid userId, string newPassword, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 6)
+        {
+            return Result.Failure("Password must be at least 6 characters long.");
+        }
+
+        var user = await _users.GetByIdAsync(userId, ct);
+        if (user is null)
+        {
+            return Result.Failure("User not found.");
+        }
+
+        user.PasswordHash = _passwordHasher.Hash(newPassword);
+        user.MustChangePassword = false;
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        return Result.Success();
+    }
+
     /// <summary>
     /// Issues a fresh access + refresh token pair for a user, persists the new
     /// refresh token (hashed), and saves all pending changes in one transaction.
@@ -128,7 +168,8 @@ public class AuthService : IAuthService
             Role = user.Role,
             ExpiresAtUtc = accessExpiresAtUtc,
             RefreshToken = refreshToken,
-            RefreshTokenExpiresAtUtc = refreshExpiresAtUtc
+            RefreshTokenExpiresAtUtc = refreshExpiresAtUtc,
+            MustChangePassword = user.MustChangePassword
         };
     }
 }

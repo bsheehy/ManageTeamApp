@@ -24,10 +24,14 @@ public class MatchesController : ApiControllerBase
     [HttpGet]
     public async Task<ActionResult<List<MatchSummaryDto>>> GetMyMatches([FromQuery] Guid? teamId, CancellationToken ct)
     {
-        var isManager = User.IsInRole(nameof(UserRole.Manager));
-        if (isManager && teamId.HasValue)
+        if (teamId.HasValue)
         {
-            var teamResult = await _matchService.GetMatchesForTeamAsync(teamId.Value, ct);
+            var teamResult = await _matchService.GetMatchesForTeamAsync(teamId.Value, CurrentUserId, ct);
+            if (!teamResult.Succeeded)
+            {
+                return NotFound(new { error = teamResult.Error });
+            }
+
             return Ok(teamResult.Data);
         }
 
@@ -55,7 +59,7 @@ public class MatchesController : ApiControllerBase
     /// Schedules a new match/fixture for a team. Manager (and owner of the team) only.
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = nameof(UserRole.Manager))]
+    [Authorize(Roles = $"{nameof(UserRole.ClubManager)},{nameof(UserRole.TeamManager)}")]
     public async Task<ActionResult<MatchDto>> Create(CreateMatchRequest request, CancellationToken ct)
     {
         var result = await _matchService.CreateMatchAsync(CurrentUserId, request, ct);
@@ -71,7 +75,6 @@ public class MatchesController : ApiControllerBase
     /// Sets the current Player's own attendance response (confirm/decline) for a match.
     /// </summary>
     [HttpPut("{id:guid}/attendance")]
-    [Authorize(Roles = nameof(UserRole.Player))]
     public async Task<IActionResult> SetAttendance(Guid id, AttendanceResponseRequest request, CancellationToken ct)
     {
         var result = await _matchService.SetAttendanceAsync(id, CurrentUserId, request.Status, ct);
@@ -88,7 +91,7 @@ public class MatchesController : ApiControllerBase
     /// Manager (and owner of the team) only.
     /// </summary>
     [HttpPut("{id:guid}/selections")]
-    [Authorize(Roles = nameof(UserRole.Manager))]
+    [Authorize(Roles = $"{nameof(UserRole.ClubManager)},{nameof(UserRole.TeamManager)}")]
     public async Task<ActionResult<MatchDto>> AllocateSelections(Guid id, AllocateSelectionsRequest request, CancellationToken ct)
     {
         var result = await _matchService.AllocateSelectionsAsync(id, CurrentUserId, request.Allocations, ct);
