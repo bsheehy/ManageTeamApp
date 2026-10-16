@@ -40,7 +40,7 @@ public partial class RegisterViewModel : BaseViewModel
                 return;
             }
 
-            var role = IsManager ? UserRole.Manager : UserRole.Player;
+            var role = IsManager ? UserRole.ClubManager : UserRole.Player;
             var auth = await _authApi.RegisterAsync(FullName.Trim(), Email.Trim(), Password, role);
             await _session.SaveAsync(
                 auth.Token,
@@ -51,8 +51,7 @@ public partial class RegisterViewModel : BaseViewModel
                 auth.RefreshToken,
                 auth.RefreshTokenExpiresAtUtc);
 
-            var destination = auth.Role == UserRole.Manager ? "//teams" : "//matches";
-            await Shell.Current.GoToAsync(destination);
+            await Shell.Current.GoToAsync("//dashboard");
         });
     }
 }

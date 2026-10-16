@@ -1,8 +1,11 @@
+using System.Text.Json.Serialization;
+
 namespace TeamManage.Domain.Enums;
 
 /// <summary>
 /// The sport a team/panel plays. Determines sensible defaults for squad size.
 /// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter<SportType>))]
 public enum SportType
 {
     Gaelic_Football = 0,

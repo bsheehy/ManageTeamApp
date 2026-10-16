@@ -47,7 +47,7 @@ public partial class MatchPlayerRowViewModel : ObservableObject
     }
 }
 
-[QueryProperty(nameof(MatchId), "matchId")]
+[QueryProperty(nameof(MatchIdText), "matchId")]
 public partial class MatchDetailViewModel : BaseViewModel
 {
     private readonly IMatchApiService _matchApi;
@@ -66,9 +66,14 @@ public partial class MatchDetailViewModel : BaseViewModel
 
     public List<PositionDto> AvailablePositions { get; private set; } = [];
 
-    public bool IsManager => _session.Role == UserRole.Manager;
+    public bool IsManager => _session.CanManageTeams;
 
-    public bool IsPlayer => _session.Role == UserRole.Player;
+    public bool IsPlayer => _session.Role == UserRole.Player || _session.CanManageTeams;
+
+    public string MatchIdText
+    {
+        set => MatchId = Guid.TryParse(value, out var id) ? id : Guid.Empty;
+    }
 
     partial void OnMatchIdChanged(Guid value) => _ = LoadAsync();
 

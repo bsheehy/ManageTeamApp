@@ -14,7 +14,7 @@ public class MatchConfiguration : IEntityTypeConfiguration<Match>
 
         builder.Property(m => m.Location).IsRequired().HasMaxLength(200);
 
-        builder.Property(m => m.Status).HasConversion<string>().HasMaxLength(20);
+        builder.Property(m => m.Status);
 
         builder.HasMany(m => m.Selections)
             .WithOne(mp => mp.Match)
@@ -29,7 +29,7 @@ public class MatchPlayerConfiguration : IEntityTypeConfiguration<MatchPlayer>
     {
         builder.HasKey(mp => mp.Id);
 
-        builder.Property(mp => mp.AttendanceStatus).HasConversion<string>().HasMaxLength(20);
+        builder.Property(mp => mp.AttendanceStatus);
 
         builder.HasIndex(mp => new { mp.MatchId, mp.PlayerId }).IsUnique();
 

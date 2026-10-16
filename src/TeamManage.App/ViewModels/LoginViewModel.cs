@@ -44,8 +44,7 @@ public partial class LoginViewModel : BaseViewModel
                 auth.RefreshToken,
                 auth.RefreshTokenExpiresAtUtc);
 
-            var destination = auth.Role == UserRole.Manager ? "//teams" : "//matches";
-            await Shell.Current.GoToAsync(destination);
+            await Shell.Current.GoToAsync("//dashboard");
         });
     }
 

@@ -13,13 +13,8 @@
         Route="login" />
 
     <ShellContent
-        Title="My Teams"
-        ContentTemplate="{DataTemplate views:TeamsPage}"
-        Route="teams" />
-
-    <ShellContent
-        Title="My Matches"
-        ContentTemplate="{DataTemplate views:MatchesPage}"
-        Route="matches" />
+        Title="Dashboard"
+        ContentTemplate="{DataTemplate views:DashboardPage}"
+        Route="dashboard" />
 
 </Shell>

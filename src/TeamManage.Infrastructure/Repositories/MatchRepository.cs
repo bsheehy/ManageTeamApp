@@ -17,6 +17,7 @@ public class MatchRepository : IMatchRepository
     public Task<Match?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
         _context.Matches
             .Include(m => m.Team).ThenInclude(t => t!.Positions)
+            .Include(m => m.Team).ThenInclude(t => t!.Club)
             .Include(m => m.Selections).ThenInclude(s => s.Player)
             .Include(m => m.Selections).ThenInclude(s => s.Position)
             .FirstOrDefaultAsync(m => m.Id == id, ct);

@@ -12,7 +12,12 @@ public class TeamConfiguration : IEntityTypeConfiguration<Team>
 
         builder.Property(t => t.Name).IsRequired().HasMaxLength(200);
 
-        builder.Property(t => t.Sport).HasConversion<string>().HasMaxLength(30);
+        builder.Property(t => t.Sport);
+
+        builder.HasOne(t => t.Club)
+            .WithMany(c => c.Teams)
+            .HasForeignKey(t => t.ClubId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasMany(t => t.Players)
             .WithOne(tp => tp.Team)

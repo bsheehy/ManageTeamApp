@@ -14,6 +14,8 @@ public interface ITeamApiService
     Task<TeamPlayerDto> AddPlayerAsync(Guid teamId, AddPlayerRequest request);
 
     Task RemovePlayerAsync(Guid teamId, Guid teamPlayerId);
+
+    Task<TeamManagerDto> AssignManagerAsync(Guid teamId, AssignManagerRequest request);
 }
 
 public class TeamApiService : ApiClientBase, ITeamApiService
@@ -48,6 +50,13 @@ public class TeamApiService : ApiClientBase, ITeamApiService
         var response = await Http.PostAsJsonAsync($"api/teams/{teamId}/players", request);
         await EnsureSuccessAsync(response);
         return (await response.Content.ReadFromJsonAsync<TeamPlayerDto>())!;
+    }
+
+    public async Task<TeamManagerDto> AssignManagerAsync(Guid teamId, AssignManagerRequest request)
+    {
+        var response = await Http.PutAsJsonAsync($"api/teams/{teamId}/manager", request);
+        await EnsureSuccessAsync(response);
+        return (await response.Content.ReadFromJsonAsync<TeamManagerDto>())!;
     }
 
     public async Task RemovePlayerAsync(Guid teamId, Guid teamPlayerId)

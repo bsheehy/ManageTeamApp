@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TeamManage.App.ViewModels"
+             xmlns:dto="clr-namespace:TeamManage.Application.DTOs.Managers;assembly=TeamManage.Application"
+             x:Class="TeamManage.App.Views.ManagersPage"
+             x:DataType="vm:ManagersViewModel"
+             Title="{Binding Title}">
+    <Grid Padding="16" RowDefinitions="Auto,*" RowSpacing="12">
+        <VerticalStackLayout Grid.Row="0" Spacing="8">
+            <Entry Placeholder="Full name" Text="{Binding FormFullName}" />
+            <Entry Placeholder="Email" Keyboard="Email" Text="{Binding FormEmail}" />
+            <Button Text="{Binding SaveButtonText}" Command="{Binding SaveCommand}" />
+            <Button Text="Cancel edit" Command="{Binding CancelEditCommand}" />
+            <Label Text="{Binding ErrorMessage}" TextColor="Red"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+            <Label Text="{Binding InfoMessage}" TextColor="Green"
+                   IsVisible="{Binding InfoMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+        </VerticalStackLayout>
+        <RefreshView Grid.Row="1" IsRefreshing="{Binding IsBusy}" Command="{Binding LoadCommand}">
+            <CollectionView ItemsSource="{Binding Managers}" SelectionMode="None">
+                <CollectionView.EmptyView>
+                    <Label Text="No team managers yet." HorizontalOptions="Center" Margin="0,40,0,0" />
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="dto:TeamManagerSummaryDto">
+                        <Frame Margin="0,4" Padding="14" CornerRadius="8">
+                            <VerticalStackLayout Spacing="6">
+                                <Label Text="{Binding FullName}" FontSize="18" FontAttributes="Bold" />
+                                <Label Text="{Binding Email}" FontSize="13" TextColor="Gray" />
+                                <Label Text="Invite pending" FontSize="12" TextColor="Orange"
+                                       IsVisible="{Binding InvitePending}" />
+                                <HorizontalStackLayout Spacing="8">
+                                    <Button Text="Edit"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ManagersViewModel}}, Path=EditCommand}"
+                                            CommandParameter="{Binding .}" />
+                                    <Button Text="Resend invite" IsVisible="{Binding InvitePending}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ManagersViewModel}}, Path=ResendInviteCommand}"
+                                            CommandParameter="{Binding .}" />
+                                    <Button Text="Delete"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ManagersViewModel}}, Path=DeleteCommand}"
+                                            CommandParameter="{Binding .}" />
+                                </HorizontalStackLayout>
+                            </VerticalStackLayout>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+    </Grid>
+</ContentPage>

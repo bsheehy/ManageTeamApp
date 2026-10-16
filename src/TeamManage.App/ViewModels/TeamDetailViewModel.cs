@@ -7,7 +7,7 @@ using TeamManage.Domain.Enums;
 
 namespace TeamManage.App.ViewModels;
 
-[QueryProperty(nameof(TeamId), "teamId")]
+[QueryProperty(nameof(TeamIdText), "teamId")]
 public partial class TeamDetailViewModel : BaseViewModel
 {
     private readonly ITeamApiService _teamApi;
@@ -33,7 +33,32 @@ public partial class TeamDetailViewModel : BaseViewModel
 
     public ObservableCollection<TeamPlayerDto> Players { get; } = [];
 
-    public bool IsManager => _session.Role == UserRole.Manager;
+    [ObservableProperty]
+    private string newManagerFullName = string.Empty;
+
+    [ObservableProperty]
+    private string newManagerEmail = string.Empty;
+
+    [ObservableProperty]
+    private string? lastManagerPassword;
+
+    public bool IsManager => Team?.CanManage == true;
+
+    public bool CanAssignManager => Team?.CanAssignManager == true;
+
+    public string CurrentManagerText => string.IsNullOrEmpty(Team?.ManagerName) ? "No team manager assigned" : $"Team manager: {Team.ManagerName}";
+
+    partial void OnTeamChanged(TeamDto? value)
+    {
+        OnPropertyChanged(nameof(IsManager));
+        OnPropertyChanged(nameof(CanAssignManager));
+        OnPropertyChanged(nameof(CurrentManagerText));
+    }
+
+    public string TeamIdText
+    {
+        set => TeamId = Guid.TryParse(value, out var id) ? id : Guid.Empty;
+    }
 
     partial void OnTeamIdChanged(Guid value) => _ = LoadAsync();
 
@@ -91,6 +116,32 @@ public partial class TeamDetailViewModel : BaseViewModel
             NewPlayerFullName = string.Empty;
             NewPlayerEmail = string.Empty;
             NewPlayerJerseyNumber = null;
+        });
+    }
+
+    [RelayCommand]
+    private async Task AssignManagerAsync()
+    {
+        await RunBusyAsync(async () =>
+        {
+            if (string.IsNullOrWhiteSpace(NewManagerEmail))
+            {
+                ErrorMessage = "Please enter the manager's email.";
+                return;
+            }
+
+            var manager = await _teamApi.AssignManagerAsync(TeamId, new()
+            {
+                FullName = NewManagerFullName.Trim(),
+                Email = NewManagerEmail.Trim()
+            });
+
+            LastManagerPassword = manager.InviteSent
+                ? $"An invite email with a sign-in link was sent to {manager.Email}."
+                : null;
+            NewManagerFullName = string.Empty;
+            NewManagerEmail = string.Empty;
+            Team = await _teamApi.GetTeamAsync(TeamId);
         });
     }
 

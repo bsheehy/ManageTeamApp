@@ -20,7 +20,7 @@ public partial class TeamsViewModel : BaseViewModel
 
     public ObservableCollection<TeamSummaryDto> Teams { get; } = [];
 
-    public bool IsManager => _session.Role == UserRole.Manager;
+    public bool IsManager => _session.IsClubManager;
 
     public string WelcomeMessage => $"Welcome, {_session.FullName}";
 

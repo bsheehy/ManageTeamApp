@@ -49,8 +49,27 @@ public static class MauiProgram
 			.AddHttpMessageHandler<TokenRefreshHandler>()
 			.AddHttpMessageHandler<AuthHeaderHandler>();
 
+		builder.Services.AddHttpClient<IManagerApiService, ManagerApiService>(ConfigureApiClient)
+			.ConfigureDevCertificateHandler()
+			.AddHttpMessageHandler<TokenRefreshHandler>()
+			.AddHttpMessageHandler<AuthHeaderHandler>();
+
+		builder.Services.AddHttpClient<IClubApiService, ClubApiService>(ConfigureApiClient)
+			.ConfigureDevCertificateHandler()
+			.AddHttpMessageHandler<TokenRefreshHandler>()
+			.AddHttpMessageHandler<AuthHeaderHandler>();
+
+		builder.Services.AddTransient<ClubsViewModel>();
+		builder.Services.AddTransient<ManagersViewModel>();
+		builder.Services.AddTransient<ManagersPage>();
+		builder.Services.AddTransient<ChangePasswordViewModel>();
+		builder.Services.AddTransient<ChangePasswordPage>();
+		builder.Services.AddTransient<CreateClubViewModel>();
+		builder.Services.AddTransient<ClubsPage>();
+		builder.Services.AddTransient<CreateClubPage>();
 		builder.Services.AddTransient<LoginViewModel>();
 		builder.Services.AddTransient<RegisterViewModel>();
+		builder.Services.AddTransient<DashboardViewModel>();
 		builder.Services.AddTransient<TeamsViewModel>();
 		builder.Services.AddTransient<TeamDetailViewModel>();
 		builder.Services.AddTransient<CreateTeamViewModel>();
@@ -60,6 +79,7 @@ public static class MauiProgram
 
 		builder.Services.AddTransient<LoginPage>();
 		builder.Services.AddTransient<RegisterPage>();
+		builder.Services.AddTransient<DashboardPage>();
 		builder.Services.AddTransient<TeamsPage>();
 		builder.Services.AddTransient<TeamDetailPage>();
 		builder.Services.AddTransient<CreateTeamPage>();

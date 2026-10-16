@@ -9,9 +9,13 @@ public interface ITeamRepository
     /// </summary>
     Task<Team?> GetByIdAsync(Guid id, CancellationToken ct = default);
 
-    Task<List<Team>> GetByManagerIdAsync(Guid managerId, CancellationToken ct = default);
+    /// <summary>
+    /// Gets every team the user is involved in: teams in clubs they manage, teams they
+    /// manage, and teams they play on.
+    /// </summary>
+    Task<List<Team>> GetForUserAsync(Guid userId, CancellationToken ct = default);
 
-    Task<List<Team>> GetByPlayerIdAsync(Guid playerId, CancellationToken ct = default);
+    Task<List<Team>> GetByClubIdAsync(Guid clubId, CancellationToken ct = default);
 
     Task AddAsync(Team team, CancellationToken ct = default);
 

@@ -9,6 +9,10 @@ public interface IAuthApiService
     Task<AuthResponse> LoginAsync(string email, string password);
 
     Task<AuthResponse> RegisterAsync(string fullName, string email, string password, UserRole role);
+
+    Task<AuthResponse> RedeemInviteAsync(string token);
+
+    Task ChangePasswordAsync(string newPassword);
 }
 
 public class AuthApiService : ApiClientBase, IAuthApiService
@@ -22,6 +26,19 @@ public class AuthApiService : ApiClientBase, IAuthApiService
         var response = await Http.PostAsJsonAsync("api/auth/login", new LoginRequest { Email = email, Password = password });
         await EnsureSuccessAsync(response);
         return (await response.Content.ReadFromJsonAsync<AuthResponse>())!;
+    }
+
+    public async Task<AuthResponse> RedeemInviteAsync(string token)
+    {
+        var response = await Http.PostAsJsonAsync("api/auth/redeem-invite", new RedeemInviteRequest { Token = token });
+        await EnsureSuccessAsync(response);
+        return (await response.Content.ReadFromJsonAsync<AuthResponse>())!;
+    }
+
+    public async Task ChangePasswordAsync(string newPassword)
+    {
+        var response = await Http.PutAsJsonAsync("api/account/password", new ChangePasswordRequest { NewPassword = newPassword });
+        await EnsureSuccessAsync(response);
     }
 
     public async Task<AuthResponse> RegisterAsync(string fullName, string email, string password, UserRole role)
